@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Home</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            background: #075e54;
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            margin: 0;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .logout-btn {
+            background: #d33;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .logout-btn:hover {
+            background: #b22;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        .section {
+            background: white;
+            margin-bottom: 30px;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #075e54;
+            padding-bottom: 10px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .card {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .card h3 {
+            margin: 0 0 10px 0;
+            color: #075e54;
+        }
+        .card p {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+        }
+        .btn {
+            background: #25d366;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background: #128c7e;
+        }
+        .btn-secondary {
+            background: #667eea;
+        }
+        .btn-secondary:hover {
+            background: #5a67d8;
+        }
+        .create-room {
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .create-room:hover {
+            background: #5a67d8;
+        }
+        .admin-notice {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 10px 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .admin-link {
+            background: #6c757d;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        .admin-link:hover {
+            background: #5a6268;
+        }
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>Chat App</h1>
+            <div class="user-info">
+                <span>Welcome, {{ user.username }}!{% if is_admin %} (Admin){% endif %}</span>
+                {% if is_admin %}
+                    <a href="/admin/" class="admin-link">Admin Panel</a>
+                {% endif %}
+                <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        {% if is_admin %}
+        <div class="admin-notice">
+            <strong>Admin Notice:</strong> You are logged in as an administrator. Regular users won't see admin accounts in their chat lists for privacy and security reasons.
+        </div>
+        {% endif %}
+        
+        <div class="section">
+            <h2>Chat Rooms</h2>
+            <button class="create-room" onclick="createRoom()">Create New Room</button>
+            <div class="grid">
+                {% for room in rooms %}
+                <div class="card">
+                    <h3>{{ room.name }}</h3>
+                    <p>{{ room.description }}</p>
+                    <p><small>Created by {{ room.created_by.username }}</small></p>
+                    <a href="{% url 'room' room.name %}" class="btn">Join Room</a>
+                </div>
+                {% empty %}
+                <p>No chat rooms yet. Create one to get started!</p>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Private Messages</h2>
+            <div class="grid">
+                {% for user_obj in users %}
+                <div class="card">
+                    <h3>{{ user_obj.username }}</h3>
+                    <p>Send a private message</p>
+                    <a href="{% url 'private_chat' user_obj.id %}" class="btn btn-secondary">Start Chat</a>
+                </div>
+                {% empty %}
+                <p>No other users available.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function createRoom() {
+            const roomName = prompt('Enter room name:');
+            if (roomName && roomName.trim()) {
+                window.location.href = `/room/${roomName.trim()}/`;
+            }
+        }
+    </script>
+</body>
+</html>
